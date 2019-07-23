@@ -1,0 +1,66 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+demogs <- read.csv(file='/projects/gherman/studies/OPT/MotionReport/in/OPTIMUMMainDatabaseF_DATA_2019-05-27_1345.csv',header=TRUE, stringsAsFactors = FALSE) %>% mutate(., record_id=toupper(record_id))
+
+
+
+params=read.csv(file='./in/group_bold.tsv',header=TRUE, stringsAsFactors = FALSE, na.strings=c("NA", '', ' '),colClasses=c("session_id"="character"), sep="\t") %>% separate(data = ., col = bids_name, into = c("subject_id", "session_id", "task_id", "acq_id","run_id","type"), sep='_') %>% mutate(., subject_id=substr(subject_id, 5, 14),  session_id=substr(session_id,5, 7), acq_id=substr(acq_id, 5,7), task_id=substr(task_id,6,10))
+#I should fix the above 
+
+
+#params=read.csv(file='/home/gabi/Documents/kimel/opt_qc/bold.csv',header=TRUE, stringsAsFactors = FALSE, na.strings=c("NA", '', ' '),colClasses=c("session_id"="character"))
+
+
+params <- params %>% mutate(., mr_id=paste("OPT01",acq_id, substr(subject_id, 4, nchar(subject_id)),session_id,  sep="_"), acq_site=substr(acq_id, 1, 2)) 
+
+rc <- read.csv(file='./in/OPTIMUMMainDatabaseF_DATA_2019-05-27_1351.csv', stringsAsFactors = FALSE, na.strings=c("NA",'', ' '), check.names = FALSE) %>% select(., record_id, redcap_event_name, redcap_data_access_group,mr_date, mr_id) %>% filter(., redcap_event_name=="baseline_arm_6"|redcap_event_name=="6_mth_fu_arm_6", !is.na(mr_id)) %>% mutate(., mr_id=toupper(substr(mr_id, 1, nchar(mr_id)-3)))
+
+combo <- left_join(params, rc) %>% filter(., task_id == "rest")
+
+combo$mr_date <- as.Date(combo$mr_date)
+
+combo <- combo %>% mutate(., date_beforeaft=ifelse(mr_date<'2018-12-14', "before","after")) %>% filter(!is.na(date_beforeaft)) %>% mutate(., scanner=ifelse(acq_id=="CU1"|acq_id=="CU2", "CU1/2", acq_id), record_id=toupper(record_id))
+
+
+```
+
+
+```{r}
+demogs %>% group_by(redcap_data_access_group) %>% filter(record_id %in% combo$record_id) %>% ggplot(mapping = (aes(redcap_data_access_group,demo_age, col=redcap_data_access_group))) + geom_boxplot(alpha=0.1) + geom_jitter()
+
+```
+
+
+```{r}
+demogs2<- demogs %>% select(., record_id, demo_age, demo_sex)
+
+combo2 <- merge(combo, demogs2, by="record_id", all.x=TRUE )
+```
+
+
+
+```{r}
+combo2 %>% ggplot(mapping=(aes(demo_age, fd_mean, col=redcap_data_access_group))) + geom_point() +facet_wrap(~redcap_data_access_group)
+```
+```{r}
+combo2 %>% ggplot(mapping=(aes(as.factor(demo_sex), fd_mean, col=redcap_data_access_group))) + geom_jitter() +facet_wrap(~redcap_data_access_group)+geom_boxplot(alpha=0.1, col="black")
+
+```
+
