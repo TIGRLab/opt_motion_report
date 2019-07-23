@@ -33,7 +33,7 @@ params=read.csv(file='./in/group_bold.tsv',header=TRUE, stringsAsFactors = FALSE
 
 params <- params %>% mutate(., mr_id=paste("OPT01",acq_id, substr(subject_id, 4, nchar(subject_id)),session_id,  sep="_"), acq_site=substr(acq_id, 1, 2)) 
 
-rc <- read.csv(file='./in/OPTIMUMMainDatabaseF_DATA_2019-03-06_1221.csv', stringsAsFactors = FALSE, na.strings=c("NA",'', ' '), check.names = FALSE) %>% select(., record_id, redcap_event_name, redcap_data_access_group,mr_date, mr_id) %>% filter(., redcap_event_name=="baseline_arm_6"|redcap_event_name=="6_mth_fu_arm_6", !is.na(mr_id)) %>% mutate(., mr_id=toupper(substr(mr_id, 1, nchar(mr_id)-3)))
+rc <- read.csv(file='./in/OPTIMUMMainDatabaseF_DATA_2019-07-23_1456.csv', stringsAsFactors = FALSE, na.strings=c("NA",'', ' '), check.names = FALSE) %>% select(., record_id, redcap_event_name, redcap_data_access_group,mr_date, mr_id) %>% filter(., redcap_event_name=="baseline_arm_6"|redcap_event_name=="6_mth_fu_arm_6", !is.na(mr_id)) %>% mutate(., mr_id=toupper(substr(mr_id, 1, nchar(mr_id)-3)))
 
 combo <- left_join(params, rc) %>% filter(., task_id == "rest")
 
@@ -61,7 +61,7 @@ xend = as.Date("2018-12-14")
 
 xstart2=xend
 #xend2=as.Date(max(combo$mr_date))
-xend2=as.Date("2019-03-06")
+xend2=as.Date(Sys.Date())
 
 p <-  ggplot(data=combo, mapping = (aes(mr_date,fd_perc, col=acq_id)))+  
   theme_minimal()+
@@ -108,7 +108,7 @@ xend = as.Date("2018-12-14")
 
 xstart2=xend
 #xend2=as.Date(max(combo$mr_date))
-xend2=as.Date("2019-03-06")
+xend2=as.Date(Sys.Date())
 
 p <-  ggplot(data=combo, mapping = (aes(mr_date,fd_mean, col=acq_id)))+  
   theme_minimal()+
